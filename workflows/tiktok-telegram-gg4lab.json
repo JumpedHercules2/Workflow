@@ -1,0 +1,525 @@
+{
+  "name": "TikTok → Telegram + AI Reply (gg4lab / Giulia)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tiktok/comment",
+        "options": {
+          "rawBody": false
+        },
+        "responseMode": "responseNode"
+      },
+      "id": "wh-comment",
+      "name": "Webhook TikTok Comment",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1120, -120],
+      "webhookId": "tiktok-comment"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tiktok/dm",
+        "options": {
+          "rawBody": false
+        },
+        "responseMode": "responseNode"
+      },
+      "id": "wh-dm",
+      "name": "Webhook TikTok DM",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1120, 180],
+      "webhookId": "tiktok-dm"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "ok",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "ack-comment",
+      "name": "ACK 200 (Comment)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-900, -280]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "ok",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "ack-dm",
+      "name": "ACK 200 (DM)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [-900, 340]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "type",
+              "value": "comment",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "profile",
+              "value": "={{ $json.body.profile || $json.profile || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "author",
+              "value": "={{ $json.body.author || $json.author || 'anonymous' }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "author_name",
+              "value": "={{ $json.body.author_name || $json.author_name || $json.body.author || 'anonymous' }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "text",
+              "value": "={{ $json.body.text || $json.text || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a6",
+              "name": "item_id",
+              "value": "={{ $json.body.comment_id || $json.comment_id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a7",
+              "name": "context_id",
+              "value": "={{ $json.body.video_id || $json.video_id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "a8",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp || $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "norm-comment",
+      "name": "Normalize Comment",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-680, -120]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b1",
+              "name": "type",
+              "value": "dm",
+              "type": "string"
+            },
+            {
+              "id": "b2",
+              "name": "profile",
+              "value": "={{ $json.body.profile || $json.profile || 'unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "b3",
+              "name": "author",
+              "value": "={{ $json.body.author || $json.author || 'anonymous' }}",
+              "type": "string"
+            },
+            {
+              "id": "b4",
+              "name": "author_name",
+              "value": "={{ $json.body.author_name || $json.author_name || $json.body.author || 'anonymous' }}",
+              "type": "string"
+            },
+            {
+              "id": "b5",
+              "name": "text",
+              "value": "={{ $json.body.text || $json.text || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b6",
+              "name": "item_id",
+              "value": "={{ $json.body.message_id || $json.message_id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b7",
+              "name": "context_id",
+              "value": "={{ $json.body.conversation_id || $json.conversation_id || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b8",
+              "name": "timestamp",
+              "value": "={{ $json.body.timestamp || $now }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "norm-dm",
+      "name": "Normalize DM",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [-680, 180]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "merge",
+      "name": "Merge Streams",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [-420, 30]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ ($json.text || '').trim().length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-empty",
+      "name": "Filter: skip empty",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [-180, 30]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=*📥 Nuovo {{ $json.type === 'dm' ? 'DM' : 'commento' }}* su TikTok\n\n*Profilo:* `{{ $json.profile }}`\n*Da:* `{{ $json.author_name }}` ({{ $json.author }})\n{{ $json.type === 'comment' ? '*Video:* `' + $json.context_id + '`' : '*Chat:* `' + $json.context_id + '`' }}\n\n💬 _{{ $json.text.replaceAll('*','\\\\*').replaceAll('_','\\\\_').replaceAll('`','\\\\`') }}_",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_notification": false
+        }
+      },
+      "id": "tg-incoming",
+      "name": "Telegram: incoming",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [80, 30],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram_bot",
+          "name": "Telegram Bot (gg4lab)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "text",
+        "operation": "message",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "role": "system",
+              "content": "=Sei \"Giulia\", una ragazza italiana di 27 anni, solare, genuina e un po' imbranata in modo simpatico. Vivi in Italia, ti piacciono skincare, wellness e lifestyle, e hai un piccolo profilo TikTok dove provi e consigli i prodotti del brand *gg4lab* (amici tuoi), sempre con onestà.\n\nLINEE GUIDA DI STILE:\n- Italiano informale da chat: tutto minuscolo ok, frasi corte, qualche abbreviazione leggera (cmq, nn, xk) senza esagerare.\n- Tono caldo, amichevole, mai da venditrice aggressiva. Mai tutto maiuscolo. Mai hashtag spam.\n- Emoji con moderazione: 0-2 per risposta, solo comuni (😊 🫶 💕 ✨ 🥰 🙈).\n- Niente \"Ciao [nome]!\" formale da brand. Usa \"hey\", \"ciaoo\", \"amo\", \"bella\", \"raga\" quando ha senso.\n- Non inventare caratteristiche di prodotti gg4lab che non conosci: se ti chiedono dettagli tecnici precisi, vaga in modo onesto (\"guarda sul sito gg4lab trovi tutto\" / \"controllo e ti mando info in dm\").\n- Non promettere sconti né codici che non ti sono stati dati esplicitamente.\n- Niente politica, religione, argomenti controversi. Se l'utente è rude, rispondi con leggerezza e gentilezza o glissa.\n- Non dichiarare mai di essere un'AI né un bot.\n\nREGOLE DI FORMATO (MOLTO IMPORTANTI):\n- Se INPUT_TYPE = \"comment\": risposta MOLTO breve, max 1-2 frasi, max ~120 caratteri.\n- Se INPUT_TYPE = \"dm\": risposta personale, 2-4 frasi, saluta e chiudi in modo amichevole.\n- Rispondi SOLO con il testo, senza virgolette, senza prefissi tipo \"Risposta:\" o \"Giulia:\"."
+            },
+            {
+              "role": "user",
+              "content": "=INPUT_TYPE: {{ $json.type }}\nPROFILO: {{ $json.profile }}\nUTENTE: {{ $json.author_name }} ({{ $json.author }})\nTESTO: {{ $json.text }}\n\nScrivi ORA la tua risposta come Giulia."
+            }
+          ]
+        },
+        "simplify": true,
+        "options": {
+          "temperature": 0.85,
+          "maxTokens": 220,
+          "presencePenalty": 0.4,
+          "frequencyPenalty": 0.3
+        }
+      },
+      "id": "llm",
+      "name": "AI: Giulia reply",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [340, 30],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai_main",
+          "name": "OpenAI (gg4lab)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "r1",
+              "name": "reply",
+              "value": "={{ ($json.message && $json.message.content) || $json.text || $json.content || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "r2",
+              "name": "type",
+              "value": "={{ $('Filter: skip empty').item.json.type }}",
+              "type": "string"
+            },
+            {
+              "id": "r3",
+              "name": "author",
+              "value": "={{ $('Filter: skip empty').item.json.author }}",
+              "type": "string"
+            },
+            {
+              "id": "r4",
+              "name": "author_name",
+              "value": "={{ $('Filter: skip empty').item.json.author_name }}",
+              "type": "string"
+            },
+            {
+              "id": "r5",
+              "name": "profile",
+              "value": "={{ $('Filter: skip empty').item.json.profile }}",
+              "type": "string"
+            },
+            {
+              "id": "r6",
+              "name": "item_id",
+              "value": "={{ $('Filter: skip empty').item.json.item_id }}",
+              "type": "string"
+            },
+            {
+              "id": "r7",
+              "name": "context_id",
+              "value": "={{ $('Filter: skip empty').item.json.context_id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "collect-reply",
+      "name": "Collect reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [580, 30]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=*🤖 Risposta suggerita da Giulia* ({{ $json.type === 'dm' ? 'DM' : 'commento' }})\n\n➡️ _{{ $json.reply.replaceAll('*','\\\\*').replaceAll('_','\\\\_').replaceAll('`','\\\\`') }}_\n\n_per_ `{{ $json.author_name }}` _su_ `{{ $json.profile }}`",
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "disable_notification": true
+        }
+      },
+      "id": "tg-reply",
+      "name": "Telegram: AI reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [820, 30],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram_bot",
+          "name": "Telegram Bot (gg4lab)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "d1",
+              "leftValue": "={{ $env.TIKTOK_AUTOREPLY_ENABLED }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "autoreply-gate",
+      "name": "Autoreply enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1060, 30]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TIKTOK_BRIDGE_URL }}/reply",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.TIKTOK_BRIDGE_TOKEN }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"type\": \"{{ $json.type }}\",\n  \"profile\": \"{{ $json.profile }}\",\n  \"target_author\": \"{{ $json.author }}\",\n  \"item_id\": \"{{ $json.item_id }}\",\n  \"context_id\": \"{{ $json.context_id }}\",\n  \"reply\": {{ JSON.stringify($json.reply) }}\n}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "tiktok-bridge",
+      "name": "TikTok bridge (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1300, -80]
+    },
+    {
+      "parameters": {},
+      "id": "err-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [-1120, 520]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $env.TELEGRAM_CHAT_ID }}",
+        "text": "=*⚠️ Workflow error*\n\n*Workflow:* `{{ $json.workflow.name }}`\n*Node:* `{{ $json.execution.lastNodeExecuted }}`\n*Message:* `{{ $json.execution.error && $json.execution.error.message }}`\n\n<{{ $json.execution.url }}|Apri esecuzione>",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "tg-error",
+      "name": "Telegram: error alert",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [-820, 520],
+      "credentials": {
+        "telegramApi": {
+          "id": "telegram_bot",
+          "name": "Telegram Bot (gg4lab)"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook TikTok Comment": {
+      "main": [
+        [
+          { "node": "ACK 200 (Comment)", "type": "main", "index": 0 },
+          { "node": "Normalize Comment", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Webhook TikTok DM": {
+      "main": [
+        [
+          { "node": "ACK 200 (DM)", "type": "main", "index": 0 },
+          { "node": "Normalize DM", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Normalize Comment": {
+      "main": [[{ "node": "Merge Streams", "type": "main", "index": 0 }]]
+    },
+    "Normalize DM": {
+      "main": [[{ "node": "Merge Streams", "type": "main", "index": 1 }]]
+    },
+    "Merge Streams": {
+      "main": [[{ "node": "Filter: skip empty", "type": "main", "index": 0 }]]
+    },
+    "Filter: skip empty": {
+      "main": [[{ "node": "Telegram: incoming", "type": "main", "index": 0 }]]
+    },
+    "Telegram: incoming": {
+      "main": [[{ "node": "AI: Giulia reply", "type": "main", "index": 0 }]]
+    },
+    "AI: Giulia reply": {
+      "main": [[{ "node": "Collect reply", "type": "main", "index": 0 }]]
+    },
+    "Collect reply": {
+      "main": [[{ "node": "Telegram: AI reply", "type": "main", "index": 0 }]]
+    },
+    "Telegram: AI reply": {
+      "main": [[{ "node": "Autoreply enabled?", "type": "main", "index": 0 }]]
+    },
+    "Autoreply enabled?": {
+      "main": [
+        [{ "node": "TikTok bridge (HTTP)", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Error Trigger": {
+      "main": [[{ "node": "Telegram: error alert", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "pinData": {},
+  "versionId": "1",
+  "triggerCount": 2,
+  "tags": [
+    { "name": "tiktok" },
+    { "name": "telegram" },
+    { "name": "gg4lab" },
+    { "name": "ai" }
+  ]
+}
